@@ -1,12 +1,13 @@
 extern crate cursive;
+mod client;
 
 use cursive::Cursive;
 use cursive::views::{TextView, Dialog};
 use cursive::menu::{MenuTree};
 use cursive::traits::*;
-use cursive::event::{Event, Key};
+use cursive::event::{Key};
 
-fn main() {
+fn setup_window() -> Cursive {
     // Must unwrap the Result from Cursive::ncurses()
     let siv = Cursive::ncurses();
     let mut win = siv.unwrap();
@@ -29,13 +30,22 @@ fn main() {
             .delimiter()
             .leaf("Quit", |s| s.quit()));
 
-    win.add_layer(TextView::new("Hello World!\nPress q to quit."));
+    win.add_layer(TextView::new("Hello World!\nPress q to quit.\nPress Esc to select menubar"));
 
-    win.select_menubar();
+    // win.select_menubar();
+    win.set_autohide_menu(false);
 
     // win.add_global_callback(event: E, cb: F)
-    // win.add_global_callback(Key::Esc, |s| s.select_menubar());
+    win.add_global_callback(Key::Esc, |s| s.select_menubar());
     win.add_global_callback('q', |s| s.quit());
 
-    win.run()
+    win
+}
+
+
+fn main() {
+    // let mut win = setup_window();
+    // win.run();
+
+    client::test_reqwest();
 }
