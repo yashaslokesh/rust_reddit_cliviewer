@@ -1,13 +1,15 @@
 extern crate cursive;
 mod client;
 
+use client::RedditClient;
+
 use cursive::Cursive;
 use cursive::views::{TextView, Dialog, LinearLayout, EditView, Button};
 use cursive::menu::{MenuTree};
 use cursive::traits::*;
 use cursive::event::{Key};
 
-fn setup_window() -> Cursive {
+fn setup_window(reddit_client: &'static RedditClient) -> Cursive {
     // Must unwrap the Result from Cursive::ncurses()
     let siv = Cursive::ncurses();
     let mut win = siv.unwrap();
@@ -93,7 +95,7 @@ fn setup_window() -> Cursive {
                         .button("Continue", |s| {
                             s.pop_layer();
                             s.add_layer(create_auth_url_view());
-                            client::redirect_user_for_auth();
+                            reddit_client.redirect_user_for_auth();
                         })))
                 .subtree(
                     "Recent",
@@ -143,7 +145,9 @@ fn create_auth_url_view() -> Box<View> {
 
 
 fn main() {
-    let mut win = setup_window();
+    let reddit_client = client::RedditClient::new();
+
+    let mut win = setup_window(&reddit_client);
     win.run();
 
     // client::test_reqwest();
