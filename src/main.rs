@@ -62,37 +62,38 @@ fn setup_window() -> Cursive {
         .add_subtree(
             "Accounts", 
             MenuTree::new()
-                .leaf("Log In", 
-                        |s| s.add_layer(
-                            Dialog::new()
-                                .title("Enter your login details")
-                                .padding((1, 1, 1, 0))
-                                .content(
-                                    LinearLayout::vertical()
-                                    .child(
-                                        TextView::new("Username")
-                                    )
-                                    .child(
-                                        EditView::new()
-                                        .with_id("user")
-                                        .fixed_width(20)
-                                    )
-                                    .child(
-                                        TextView::new("Password")
-                                    )
-                                    .child(                                 
-                                        EditView::new()
-                                        .with_id("pass")
-                                        .fixed_width(20)
-                                    )
-                                )
-                        .button("Log In", |s| {
-                            client::connect();
-
+                .leaf(
+                    "Log In", |s| s.add_layer(
+                        Dialog::new()
+                            .title("Log In")
+                            .padding((1, 1, 1, 0))
+                            .content(
+                                TextView::new("You will now be redirected to log in to Reddit.")
+                                // LinearLayout::vertical()
+                                // .child(
+                                //     TextView::new("Username")
+                                // )
+                                // .child(
+                                //     EditView::new()
+                                //     .with_id("user")
+                                //     .fixed_width(20)
+                                // )
+                                // .child(
+                                //     TextView::new("Password")
+                                // )
+                                // .child(                                 
+                                //     EditView::new()
+                                //     .with_id("pass")
+                                //     .fixed_width(20)
+                                // )
+                            )
+                        .button("Cancel", |s| {
                             s.pop_layer();
-
-
-
+                        })
+                        .button("Continue", |s| {
+                            s.pop_layer();
+                            s.add_layer(create_auth_url_view());
+                            client::redirect_user_for_auth();
                         })))
                 .subtree(
                     "Recent",
@@ -118,10 +119,34 @@ fn setup_window() -> Cursive {
     win
 }
 
+fn create_auth_url_view() -> Box<View> {
+    let v = Dialog::new()
+            .title("Please enter the url you were redirected to in your browser into the text field below")
+            .padding((1, 1, 1, 0))
+            .content(
+                EditView::new()
+                .with_id("auth_url")
+                .fixed_width(30)
+            )
+            .button("Authenticate", |s| {
+                let url = s.call_on_id("auth_url", |view: &mut EditView| {
+                    view.get_content()
+                }).unwrap();
+
+                client::process_redirect_url(&url);
+                s.pop_layer();
+            })
+            .button("Cancel", |s| {s.pop_layer();});
+
+    Box::new(v)
+}
+
 
 fn main() {
     let mut win = setup_window();
     win.run();
 
     // client::test_reqwest();
+    // client::connect();
+    // client::redirect_user_for_auth();
 }
