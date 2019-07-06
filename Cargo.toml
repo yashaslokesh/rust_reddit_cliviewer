@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 cursive = "0.12.0"
 reqwest = "0.9.18"
+webbrowser = "0.5.1"
+rand = "0.7.0"

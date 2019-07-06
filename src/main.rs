@@ -2,7 +2,7 @@ extern crate cursive;
 mod client;
 
 use cursive::Cursive;
-use cursive::views::{TextView, Dialog};
+use cursive::views::{TextView, Dialog, LinearLayout, EditView, Button};
 use cursive::menu::{MenuTree};
 use cursive::traits::*;
 use cursive::event::{Key};
@@ -12,6 +12,17 @@ fn setup_window() -> Cursive {
     let siv = Cursive::ncurses();
     let mut win = siv.unwrap();
 
+    // let login_view = Dialog::new()
+    //                     .title("Enter your login details")
+    //                     .padding((1, 1, 1, 0))
+    //                     .content(
+    //                         EditView::new()
+    //                             .with_id("username")
+    //                             .fixed_width(20),
+    //                     )
+    //                     .button("Log In", |s| {s.pop_layer();});
+
+    // Menubar setup
     win.menubar()
         .add_subtree("File",
         MenuTree::new()
@@ -28,12 +39,77 @@ fn setup_window() -> Cursive {
                 }
             })
             .delimiter()
-            .leaf("Quit", |s| s.quit()));
+            .leaf("Quit", |s| s.quit()))
+        .add_subtree(
+            "Help",
+            MenuTree::new()
+                .subtree(
+                    "Help",
+                    MenuTree::new()
+                        .leaf("General", |s| {
+                            s.add_layer(Dialog::info("Help message!"))
+                        })
+                        .leaf("Online", |s| {
+                            let text = "Google it yourself!\n\
+                                        Kids, these days...";
+                            s.add_layer(Dialog::info(text))
+                        }),
+                )
+                .leaf("About", |s| {
+                    s.add_layer(Dialog::info("Cursive v0.0.0"))
+                }),
+        )
+        .add_subtree(
+            "Accounts", 
+            MenuTree::new()
+                .leaf("Log In", 
+                        |s| s.add_layer(
+                            Dialog::new()
+                                .title("Enter your login details")
+                                .padding((1, 1, 1, 0))
+                                .content(
+                                    LinearLayout::vertical()
+                                    .child(
+                                        TextView::new("Username")
+                                    )
+                                    .child(
+                                        EditView::new()
+                                        .with_id("user")
+                                        .fixed_width(20)
+                                    )
+                                    .child(
+                                        TextView::new("Password")
+                                    )
+                                    .child(                                 
+                                        EditView::new()
+                                        .with_id("pass")
+                                        .fixed_width(20)
+                                    )
+                                )
+                        .button("Log In", |s| {
+                            client::connect();
+
+                            s.pop_layer();
+
+
+
+                        })))
+                .subtree(
+                    "Recent",
+                    MenuTree::new().with(|tree| {
+                        for i in 1..4 {
+                            tree.add_leaf(format!("Account {}", i), |_| ())
+                        }
+                    })
+                )
+        );
 
     win.add_layer(TextView::new("Hello World!\nPress q to quit.\nPress Esc to select menubar"));
 
-    // win.select_menubar();
+    // Menu stays fixed at top of screen
     win.set_autohide_menu(false);
+    // Focused on menu on startup
+    win.select_menubar();
 
     // win.add_global_callback(event: E, cb: F)
     win.add_global_callback(Key::Esc, |s| s.select_menubar());
@@ -44,8 +120,8 @@ fn setup_window() -> Cursive {
 
 
 fn main() {
-    // let mut win = setup_window();
-    // win.run();
+    let mut win = setup_window();
+    win.run();
 
-    client::test_reqwest();
+    // client::test_reqwest();
 }
