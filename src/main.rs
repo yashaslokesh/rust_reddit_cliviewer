@@ -1,17 +1,19 @@
-extern crate cursive;
+// extern crate cursive;
 mod client;
 
 use client::RedditClient;
 
 // Align will only align the content within each view, not the view itself
 // So it aligns the children, not self
-use cursive::align::Align;
+// use cursive::align::Align;
 use cursive::event::Key;
 use cursive::menu::MenuTree;
-use cursive::theme::{PaletteColor, Theme, Color, BaseColor};
+use cursive::theme::{BaseColor, Color, PaletteColor, Theme};
 use cursive::traits::*;
-use cursive::views::{Dialog, EditView, TextView, BoxView};
+use cursive::views::{BoxView, Dialog, EditView, TextView};
 use cursive::Cursive;
+
+use std::sync::Mutex;
 
 #[macro_use]
 extern crate lazy_static;
@@ -67,16 +69,21 @@ fn setup_window() -> Cursive {
                         Dialog::new()
                             .title("Log In")
                             .padding((1, 1, 1, 0))
-                            .content(
-                                TextView::new("You will now be redirected to log in to Reddit."),
-                            )
+                            .content(TextView::new(
+                                "You will now be redirected to log in to Reddit.",
+                            ))
                             .button("Cancel", |s| {
                                 s.pop_layer();
                             })
                             .button("Continue", |s| {
                                 s.pop_layer();
                                 s.add_layer(create_auth_url_view());
-                                R_CLIENT.redirect_user_for_auth();
+                                
+                                R_CLIENT
+                                    .lock()
+                                    .unwrap()
+                                    .redirect_user_for_auth();
+                                
                             }),
                     )
                 })
@@ -95,13 +102,9 @@ fn setup_window() -> Cursive {
     //     ).align(Align::top_right())
     // );
 
-    win.add_layer(
-        BoxView::with_full_screen(
-            TextView::new(
-               "Hello World!\nPress q to quit.\nPress Esc to select menubar", 
-            )
-        )
-    );
+    win.add_layer(BoxView::with_full_screen(TextView::new(
+        "Hello World!\nPress q to quit.\nPress Esc to select menubar",
+    )));
 
     let theme = configure_custom_theme(&win);
     win.set_theme(theme);
@@ -109,7 +112,7 @@ fn setup_window() -> Cursive {
     // Menu stays fixed at top of screen
     win.set_autohide_menu(false);
     // Focused on menu on startup
-    win.select_menubar();
+    // win.select_menubar();
 
     // win.add_global_callback(event: E, cb: F)
     win.add_global_callback(Key::Esc, |s| s.select_menubar());
@@ -130,7 +133,7 @@ fn create_auth_url_view() -> Box<View> {
                 .call_on_id("auth_url", |view: &mut EditView| view.get_content())
                 .unwrap();
 
-            let result = R_CLIENT.process_redirect_url(&url);
+            let result = R_CLIENT.lock().unwrap().parse_redirect_url(&url);
 
             s.add_layer(
                 Dialog::new()
@@ -160,26 +163,20 @@ fn configure_custom_theme(win: &Cursive) -> Theme {
     // TODO: Configure theme via a configuration file
 
     let mut theme: Theme = win.current_theme().clone();
-    
+
     // Refer docs:
     // https://docs.rs/cursive/0.12.0/x86_64-apple-darwin/cursive/theme/enum.PaletteColor.html
-    theme.palette[PaletteColor::Background] = Color::Dark(BaseColor::Black);
+    theme.palette[PaletteColor::Background] = Color::Light(BaseColor::Black);
+    theme.shadow = false;
 
     theme
 }
 
-
 lazy_static! {
-    static ref R_CLIENT: RedditClient = RedditClient::new();
+    static ref R_CLIENT: Mutex<RedditClient> = Mutex::new(RedditClient::new());
 }
 
 fn main() {
-    // let reddit_client = client::RedditClient::new();
-
     let mut win = setup_window();
     win.run();
-
-    // client::test_reqwest();
-    // client::connect();
-    // client::redirect_user_for_auth();
 }
