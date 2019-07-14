@@ -1,22 +1,43 @@
-// extern crate cursive;
+// Declare all modules used here, 
+// so that if other files want to use any of these modules,
+// they are available. Add here even if main.rs doesn't use them, 
+// because adding them here puts them into the crate root.
+// refer: 
+// https://doc.rust-lang.org/book/ch07-05-separating-modules-into-different-files.html
 mod client;
+mod models;
 
 use client::RedditClient;
 
 // Align will only align the content within each view, not the view itself
 // So it aligns the children, not self
 // use cursive::align::Align;
-use cursive::event::Key;
-use cursive::menu::MenuTree;
-use cursive::theme::{BaseColor, Color, PaletteColor, Theme};
-use cursive::traits::*;
-use cursive::views::{BoxView, Dialog, EditView, TextView};
-use cursive::Cursive;
+// use cursive::event::Key;
+// use cursive::menu::MenuTree;
+// use cursive::theme::{BaseColor, Color, PaletteColor, Theme};
+// use cursive::traits::*;
+use cursive::{
+    Cursive,
+    event::Key,
+    menu::MenuTree,
+    theme::{
+        BaseColor, Color, PaletteColor, Theme
+    },
+    traits::*,
+    views::{
+        BoxView,
+        Dialog,
+        EditView,
+        TextView,
+        ListView,
+    },
+};
+
+use reqwest;
 
 use std::sync::Mutex;
 
-#[macro_use]
-extern crate lazy_static;
+use lazy_static::lazy_static;
 
 fn setup_window() -> Cursive {
     // Must unwrap the Result from Cursive::ncurses()
@@ -78,7 +99,7 @@ fn setup_window() -> Cursive {
                             .button("Continue", |s| {
                                 s.pop_layer();
                                 s.add_layer(create_auth_url_view());
-                                
+
                                 R_CLIENT
                                     .lock()
                                     .unwrap()
@@ -172,11 +193,33 @@ fn configure_custom_theme(win: &Cursive) -> Theme {
     theme
 }
 
+fn get_front_page() -> ListView {
+
+    ListView::new()
+}
+
 lazy_static! {
     static ref R_CLIENT: Mutex<RedditClient> = Mutex::new(RedditClient::new());
 }
 
 fn main() {
-    let mut win = setup_window();
-    win.run();
+    // let mut win = setup_window();
+    // win.run();
+
+    // test();
+
+    // let c = reqwest::Client::new();
+
+    // let mut r = c.get("https://api.reddit.com/hot").send();
+
+    // let m = r.unwrap().text().unwrap();
+
+    // println!("{}", m);
+
+    test();
+}
+
+fn test() {
+    let t = R_CLIENT.lock().unwrap().get_hot();
+    println!("OK", );
 }

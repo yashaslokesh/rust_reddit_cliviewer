@@ -1,20 +1,33 @@
 use base64::encode;
 
-use rand::distributions::Alphanumeric;
-use rand::Rng;
+use rand::{
+    distributions::Alphanumeric,
+    Rng,
+};
+
+use reqwest;
 
 use serde_json::Value;
 
-use std::collections::HashMap;
-use std::str;
-// use std::error::Error;
-// use std::fs::File;
-// use std::io::prelude::*;
-// use std::path::Path;
+use std::{
+    collections::HashMap,
+    str,
+};
+
+use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
 
 use url::Url;
 
 use webbrowser::{self, Browser};
+
+// Module uses
+use crate::models::{
+    Link,
+    Gildings,
+};
 
 // contain the "state" param
 pub struct RedditClient {
@@ -27,6 +40,8 @@ pub struct RedditClient {
     // Don't have acesss to these things at creation
     access_token: Option<String>,
     refresh_token: Option<String>,
+    
+    base_url: String,
 }
 
 impl RedditClient {
@@ -47,6 +62,7 @@ impl RedditClient {
             scope: client_scope,
             access_token: None,
             refresh_token: None,
+            base_url: String::from("https://oauth.reddit.com/"),
         };
 
         client
@@ -54,7 +70,7 @@ impl RedditClient {
 
     pub fn redirect_user_for_auth(&self) {
         let url = format!("https://www.reddit.com/api/v1/authorize?client_id={}&response_type={}&state={}&redirect_uri={}&duration={}&scope={}",
-       self.client_id, self.response_type, &self.state, self.redirect_uri, self.duration, self.scope);
+        self.client_id, self.response_type, &self.state, self.redirect_uri, self.duration, self.scope);
 
         if webbrowser::open_browser(Browser::Safari, &url).is_ok() {
             println!("Redirected user to Reddit login successfully",);
@@ -141,5 +157,100 @@ impl RedditClient {
         self.refresh_token = Some(String::from(
             v.get("refresh_token").unwrap().as_str().unwrap(),
         ))
+    }
+
+    pub fn get_hot(&self) -> Vec<Link> {
+
+        let mut links: Vec<Link> = Vec::new();
+
+        let client = reqwest::Client::new();
+
+        let url = "https://api.reddit.com/hot";
+
+        let resp = client.get(url).send();
+
+        let mut t: String= resp.unwrap().text().unwrap();
+
+        let p = Path::new("out/raw-text.txt");
+        let d = p.display();
+
+        let mut file = match File::create(&p) {
+            Err(why) => panic!("couldn't create {}: {}", d, why.description()),
+            Ok(file) => file,
+        };
+
+        match file.write_all(t.as_bytes()) {
+            Err(why) => panic!("couldn't write to {}: {}", d, why.description()),
+            Ok(_) => {
+                println!("successfully wrote to {}", d)
+            },
+        } 
+
+        let v: Value = serde_json::from_str(&t).unwrap();
+
+        let children: &Vec<Value> = &v["data"]["children"].as_array().unwrap().to_vec();
+
+        for child in children {
+            let data = &child["data"];
+
+            let gildings = Gildings::from_serde_map(child);
+
+            let new_link = Link {
+                author: get_string_from_string_value(&data["author"]),
+                gildings: gildings,
+                id: get_string_from_string_value(&data["id"]),
+                nsfw: data["over_18"].as_bool().unwrap(),
+                num_comments: get_u32_from_num_value(&data["num_comments"]),
+                permalink: get_string_from_string_value(&data["permalink"]),
+                score: get_u32_from_num_value(&data["score"]),
+                subreddit: get_string_from_string_value(&data["subreddit"]),
+                subreddit_id: get_string_from_string_value(&data["subreddit_id"])
+            };
+
+            links.push(new_link);
+        }
+
+        println!("Title of first link: {}", children.get(0).unwrap()["data"]["title"]);
+
+        println!("Num links: {}\n", children.len());
+
+        let path = Path::new("out/serde-json'd.txt");
+        let display = path.display();
+
+        let mut file = match File::create(&path) {
+            Err(why) => panic!("couldn't create {}: {}", display, why.description()),
+            Ok(file) => file,
+        };
+
+        match file.write_all(serde_json::to_string_pretty(&v).unwrap().as_bytes()) {
+            Err(why) => panic!("couldn't write to {}: {}", display, why.description()),
+            Ok(_) => {
+                println!("successfully wrote to {}", display);
+            },
+        }
+
+        links
+    }
+}
+
+fn get_string_from_string_value(v: &Value) -> String {
+    String::from(v.as_str().unwrap())
+}
+
+fn get_u32_from_num_value(v: &Value) -> u32 {
+    v.as_u64().unwrap() as u32
+}
+
+// Keeps track of endpoints
+
+// type EndpointDescriptor = &str;
+
+impl RedditClient {
+    fn get_endpoint_url(&self, descriptor: &str) -> &str {
+        match descriptor {
+            "me" => "api/v1/me",
+            "hot" => "hot",
+            &_ => "bad",
+        }
     }
 }
