@@ -1,8 +1,8 @@
-// Declare all modules used here, 
+// Declare all modules used here,
 // so that if other files want to use any of these modules,
-// they are available. Add here even if main.rs doesn't use them, 
+// they are available. Add here even if main.rs doesn't use them,
 // because adding them here puts them into the crate root.
-// refer: 
+// refer:
 // https://doc.rust-lang.org/book/ch07-05-separating-modules-into-different-files.html
 mod client;
 mod models;
@@ -17,20 +17,12 @@ use client::RedditClient;
 // use cursive::theme::{BaseColor, Color, PaletteColor, Theme};
 // use cursive::traits::*;
 use cursive::{
-    Cursive,
     event::Key,
     menu::MenuTree,
-    theme::{
-        BaseColor, Color, PaletteColor, Theme
-    },
+    theme::{BaseColor, Color, PaletteColor, Theme},
     traits::*,
-    views::{
-        BoxView,
-        Dialog,
-        EditView,
-        TextView,
-        ListView,
-    },
+    views::{BoxView, Dialog, EditView, ListView, TextView},
+    Cursive,
 };
 
 use reqwest;
@@ -100,11 +92,7 @@ fn setup_window() -> Cursive {
                                 s.pop_layer();
                                 s.add_layer(create_auth_url_view());
 
-                                R_CLIENT
-                                    .lock()
-                                    .unwrap()
-                                    .redirect_user_for_auth();
-                                
+                                R_CLIENT.lock().unwrap().redirect_user_for_auth();
                             }),
                     )
                 })
@@ -194,7 +182,6 @@ fn configure_custom_theme(win: &Cursive) -> Theme {
 }
 
 fn get_front_page() -> ListView {
-
     ListView::new()
 }
 
@@ -221,5 +208,5 @@ fn main() {
 
 fn test() {
     let t = R_CLIENT.lock().unwrap().get_hot();
-    println!("OK", );
+    println!("OK",);
 }

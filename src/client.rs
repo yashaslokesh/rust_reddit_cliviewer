@@ -1,18 +1,12 @@
 use base64::encode;
 
-use rand::{
-    distributions::Alphanumeric,
-    Rng,
-};
+use rand::{distributions::Alphanumeric, Rng};
 
 use reqwest;
 
 use serde_json::Value;
 
-use std::{
-    collections::HashMap,
-    str,
-};
+use std::{collections::HashMap, str};
 
 use std::error::Error;
 use std::fs::File;
@@ -24,10 +18,7 @@ use url::Url;
 use webbrowser::{self, Browser};
 
 // Module uses
-use crate::models::{
-    Link,
-    Gildings,
-};
+use crate::models::{Gildings, Link};
 
 // contain the "state" param
 pub struct RedditClient {
@@ -40,7 +31,7 @@ pub struct RedditClient {
     // Don't have acesss to these things at creation
     access_token: Option<String>,
     refresh_token: Option<String>,
-    
+
     base_url: String,
 }
 
@@ -160,7 +151,6 @@ impl RedditClient {
     }
 
     pub fn get_hot(&self) -> Vec<Link> {
-
         let mut links: Vec<Link> = Vec::new();
 
         let client = reqwest::Client::new();
@@ -169,7 +159,7 @@ impl RedditClient {
 
         let resp = client.get(url).send();
 
-        let mut t: String= resp.unwrap().text().unwrap();
+        let mut t: String = resp.unwrap().text().unwrap();
 
         let p = Path::new("out/raw-text.txt");
         let d = p.display();
@@ -181,10 +171,8 @@ impl RedditClient {
 
         match file.write_all(t.as_bytes()) {
             Err(why) => panic!("couldn't write to {}: {}", d, why.description()),
-            Ok(_) => {
-                println!("successfully wrote to {}", d)
-            },
-        } 
+            Ok(_) => println!("successfully wrote to {}", d),
+        }
 
         let v: Value = serde_json::from_str(&t).unwrap();
 
@@ -204,13 +192,16 @@ impl RedditClient {
                 permalink: get_string_from_string_value(&data["permalink"]),
                 score: get_u32_from_num_value(&data["score"]),
                 subreddit: get_string_from_string_value(&data["subreddit"]),
-                subreddit_id: get_string_from_string_value(&data["subreddit_id"])
+                subreddit_id: get_string_from_string_value(&data["subreddit_id"]),
             };
 
             links.push(new_link);
         }
 
-        println!("Title of first link: {}", children.get(0).unwrap()["data"]["title"]);
+        println!(
+            "Title of first link: {}",
+            children.get(0).unwrap()["data"]["title"]
+        );
 
         println!("Num links: {}\n", children.len());
 
@@ -226,7 +217,7 @@ impl RedditClient {
             Err(why) => panic!("couldn't write to {}: {}", display, why.description()),
             Ok(_) => {
                 println!("successfully wrote to {}", display);
-            },
+            }
         }
 
         links

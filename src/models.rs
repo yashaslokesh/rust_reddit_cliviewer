@@ -1,4 +1,3 @@
-
 use serde_json::value::Value;
 
 pub struct Link {
@@ -13,9 +12,7 @@ pub struct Link {
     pub subreddit_id: String,
 }
 
-pub struct Redditor {
-
-}
+pub struct Redditor {}
 
 pub struct Gildings {
     silver: u8,
@@ -26,7 +23,6 @@ pub struct Gildings {
 impl Gildings {
     // Pass in the link's JSON, should have "data" and "kind": "t3"
     pub fn from_serde_map(link_data: &Value) -> Gildings {
-
         // Makes sure the passed in JSON is for a Reddit link
         assert!(link_data["kind"] == "t3");
 
@@ -34,17 +30,17 @@ impl Gildings {
 
         let silver: u8 = match gildings.get("gid_1") {
             Some(s) => s.as_u64().unwrap() as u8,
-            None => 0, 
+            None => 0,
         };
 
         let gold: u8 = match gildings.get("gid_2") {
             Some(s) => s.as_u64().unwrap() as u8,
-            None => 0, 
+            None => 0,
         };
 
         let platinum: u8 = match gildings.get("gid_3") {
             Some(s) => s.as_u64().unwrap() as u8,
-            None => 0, 
+            None => 0,
         };
 
         Gildings {
