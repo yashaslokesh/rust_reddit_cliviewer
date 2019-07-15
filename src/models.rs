@@ -14,6 +14,7 @@ pub struct Link {
     score: u32,
     subreddit: String,
     subreddit_id: String,
+    title: String,
 }
 
 impl RedditObject for Link {
@@ -37,17 +38,32 @@ impl RedditObject for Link {
             score: get_u32_from_num_value(&data["score"]),
             subreddit: get_string_from_string_value(&data["subreddit"]),
             subreddit_id: get_string_from_string_value(&data["subreddit_id"]),
+            title: get_string_from_string_value(&data["title"]),
         };
 
         new_link
     }
 }
 
+impl Link {
+    pub fn author(&self) -> &str {
+        self.author.as_str()
+    }
 
+    pub fn id(&self) -> &str {
+        self.id.as_str()
+    }
+
+    pub fn subreddit(&self) -> &str {
+        self.subreddit.as_str()
+    }
+
+    pub fn title(&self) -> &str {
+        self.title.as_str()
+    }
+}
 
 pub struct Redditor {}
-
-
 
 pub struct Gildings {
     silver: u8,

@@ -17,12 +17,17 @@ use client::RedditClient;
 // use cursive::theme::{BaseColor, Color, PaletteColor, Theme};
 // use cursive::traits::*;
 use cursive::{
+    align::VAlign,
     event::Key,
     menu::MenuTree,
-    theme::{BaseColor, Color, PaletteColor, Theme},
+    theme::{BaseColor, Color, ColorStyle, PaletteColor, Theme},
     traits::*,
-    views::{BoxView, Dialog, EditView, ListView, TextView},
-    Cursive,
+    view::SizeConstraint,
+    views::{
+        BoxView, Button, Canvas, Dialog, EditView, LinearLayout, ListView, OnEventView, PaddedView,
+        ScrollView, SelectView, TextView,
+    },
+    Cursive, Printer,
 };
 
 use reqwest;
@@ -106,14 +111,7 @@ fn setup_window() -> Cursive {
                 ),
         );
 
-    // win.add_layer(TextView::new(
-    //     "Hello World!\nPress q to quit.\nPress Esc to select menubar",
-    //     ).align(Align::top_right())
-    // );
-
-    win.add_layer(BoxView::with_full_screen(TextView::new(
-        "Hello World!\nPress q to quit.\nPress Esc to select menubar",
-    )));
+    win.add_layer(get_front_page());
 
     let theme = configure_custom_theme(&win);
     win.set_theme(theme);
@@ -175,14 +173,71 @@ fn configure_custom_theme(win: &Cursive) -> Theme {
 
     // Refer docs:
     // https://docs.rs/cursive/0.12.0/x86_64-apple-darwin/cursive/theme/enum.PaletteColor.html
-    theme.palette[PaletteColor::Background] = Color::Light(BaseColor::Black);
+    theme.palette[PaletteColor::Background] = Color::Dark(BaseColor::Black);
+    theme.palette[PaletteColor::View] = Color::Light(BaseColor::Black);
+    theme.palette[PaletteColor::Primary] = Color::Light(BaseColor::White);
     theme.shadow = false;
 
     theme
 }
 
-fn get_front_page() -> ListView {
-    ListView::new()
+fn get_front_page() -> ScrollView<OnEventView<LinearLayout>> {
+    let links = R_CLIENT.lock().unwrap().get_hot();
+
+    // let mut list = ListView::new();
+    let mut list = OnEventView::new(LinearLayout::vertical()).on_event_inner(
+        Key::Enter,
+        |l: &mut LinearLayout, _| {
+            println!("idx: {}", l.get_focus_index());
+
+            // l.get_child_mut(l.get_focus_index()).unwrap().None
+            None
+        },
+    );
+
+    for link in links {
+        // let link_wrapper = Boxable
+
+        let mut listing = OnEventView::new(
+            Canvas::wrap(BoxView::with_full_width(PaddedView::new(
+                ((1, 1), (1, 1)),
+                LinearLayout::vertical()
+                    .child(TextView::new(link.title()))
+                    .child(
+                        LinearLayout::horizontal()
+                            .child(TextView::new(format!("r/{}", link.subreddit())))
+                            // .child(TextView::new(link.author()))
+                            .child(PaddedView::new(
+                                ((2, 2), (0, 0)),
+                                TextView::new(link.author()),
+                            )),
+                    ),
+            )))
+            .with_draw(draw),
+        );
+
+        list.get_inner_mut().add_child(listing);
+    }
+
+    // list.
+
+    // BoxView::with_full_screen(list)
+    ScrollView::new(list)
+}
+
+fn draw(t: &BoxView<PaddedView<LinearLayout>>, p: &Printer) {
+    let style = ColorStyle::new(Color::Dark(BaseColor::Blue), Color::Light(BaseColor::Blue));
+
+    p.with_color(style, |printer: &Printer| {
+        // printer.print_box((0, 0), printer.output_size, false);
+
+        let offset_printer = printer.offset((0, 0));
+
+        offset_printer.print_box((0, 0), offset_printer.output_size, false);
+
+        t.draw(&offset_printer);
+        // printer.print((0, 0), "+");
+    })
 }
 
 lazy_static! {
@@ -190,10 +245,8 @@ lazy_static! {
 }
 
 fn main() {
-    // let mut win = setup_window();
-    // win.run();
-
-    // test();
+    let mut win = setup_window();
+    win.run();
 
     // let c = reqwest::Client::new();
 
@@ -203,10 +256,12 @@ fn main() {
 
     // println!("{}", m);
 
-    test();
+    // test();
 }
 
 fn test() {
     let t = R_CLIENT.lock().unwrap().get_hot();
     println!("OK",);
 }
+
+// impl

@@ -18,6 +18,9 @@ use url::Url;
 use webbrowser::{self, Browser};
 
 // Module uses
+// Trait
+use crate::models::RedditObject;
+// Struct
 use crate::models::{Gildings, Link};
 
 // contain the "state" param
@@ -176,24 +179,11 @@ impl RedditClient {
 
         let v: Value = serde_json::from_str(&t).unwrap();
 
+        // Holds vector of Value types, so each entry is an entry in a JSON array, which may hold more JSON code within
         let children: &Vec<Value> = &v["data"]["children"].as_array().unwrap().to_vec();
 
         for child in children {
-            let data = &child["data"];
-
-            let gildings = Gildings::from_serde_map(child);
-
-            let new_link = Link {
-                author: get_string_from_string_value(&data["author"]),
-                gildings: gildings,
-                id: get_string_from_string_value(&data["id"]),
-                nsfw: data["over_18"].as_bool().unwrap(),
-                num_comments: get_u32_from_num_value(&data["num_comments"]),
-                permalink: get_string_from_string_value(&data["permalink"]),
-                score: get_u32_from_num_value(&data["score"]),
-                subreddit: get_string_from_string_value(&data["subreddit"]),
-                subreddit_id: get_string_from_string_value(&data["subreddit_id"]),
-            };
+            let new_link = Link::from_serde_map(child);
 
             links.push(new_link);
         }
@@ -222,14 +212,6 @@ impl RedditClient {
 
         links
     }
-}
-
-fn get_string_from_string_value(v: &Value) -> String {
-    String::from(v.as_str().unwrap())
-}
-
-fn get_u32_from_num_value(v: &Value) -> u32 {
-    v.as_u64().unwrap() as u32
 }
 
 // Keeps track of endpoints
