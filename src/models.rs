@@ -1,18 +1,53 @@
 use serde_json::value::Value;
 
-pub struct Link {
-    pub author: String,
-    pub gildings: Gildings,
-    pub id: String,
-    pub nsfw: bool,
-    pub num_comments: u32,
-    pub permalink: String,
-    pub score: u32,
-    pub subreddit: String,
-    pub subreddit_id: String,
+pub trait RedditObject {
+    fn from_serde_map(object_data: &Value) -> Self;
 }
 
+pub struct Link {
+    author: String,
+    gildings: Gildings,
+    id: String,
+    nsfw: bool,
+    num_comments: u32,
+    permalink: String,
+    score: u32,
+    subreddit: String,
+    subreddit_id: String,
+}
+
+impl RedditObject for Link {
+    fn from_serde_map(link_data: &Value) -> Link {
+        // Make sure the passed in JSON is for a link
+        assert!(link_data["kind"] == "t3");
+
+        let data = &link_data["data"];
+
+        // Kinda redundant for now
+        // TODO: Find a better way to do the gildings creation
+        let gildings = Gildings::from_serde_map(link_data);
+
+        let new_link = Link {
+            author: get_string_from_string_value(&data["author"]),
+            gildings: gildings,
+            id: get_string_from_string_value(&data["id"]),
+            nsfw: data["over_18"].as_bool().unwrap(),
+            num_comments: get_u32_from_num_value(&data["num_comments"]),
+            permalink: get_string_from_string_value(&data["permalink"]),
+            score: get_u32_from_num_value(&data["score"]),
+            subreddit: get_string_from_string_value(&data["subreddit"]),
+            subreddit_id: get_string_from_string_value(&data["subreddit_id"]),
+        };
+
+        new_link
+    }
+}
+
+
+
 pub struct Redditor {}
+
+
 
 pub struct Gildings {
     silver: u8,
@@ -20,9 +55,9 @@ pub struct Gildings {
     platinum: u8,
 }
 
-impl Gildings {
+impl RedditObject for Gildings {
     // Pass in the link's JSON, should have "data" and "kind": "t3"
-    pub fn from_serde_map(link_data: &Value) -> Gildings {
+    fn from_serde_map(link_data: &Value) -> Gildings {
         // Makes sure the passed in JSON is for a Reddit link
         assert!(link_data["kind"] == "t3");
 
@@ -49,4 +84,12 @@ impl Gildings {
             platinum: platinum,
         }
     }
+}
+
+fn get_string_from_string_value(v: &Value) -> String {
+    String::from(v.as_str().unwrap())
+}
+
+fn get_u32_from_num_value(v: &Value) -> u32 {
+    v.as_u64().unwrap() as u32
 }
