@@ -18,14 +18,14 @@ use client::RedditClient;
 // use cursive::traits::*;
 use cursive::{
     align::VAlign,
-    event::{Key, EventResult, Event, MouseEvent, MouseButton},
+    event::{Event, EventResult, Key, MouseButton, MouseEvent},
     menu::MenuTree,
     theme::{BaseColor, Color, ColorStyle, PaletteColor, Theme},
     traits::*,
-    view::{SizeConstraint, ScrollStrategy},
+    view::{ScrollStrategy, SizeConstraint},
     views::{
-        BoxView, Button, Canvas, Dialog, EditView, LinearLayout, ListView, OnEventView, PaddedView,
-        ScrollView, SelectView, TextView, Checkbox, IdView,
+        BoxView, Button, Canvas, Checkbox, Dialog, EditView, IdView, LinearLayout, ListView,
+        OnEventView, PaddedView, ScrollView, SelectView, TextView,
     },
     Cursive, Printer,
 };
@@ -34,7 +34,7 @@ use core::ops::DerefMut;
 
 use reqwest;
 
-use std::{sync::Mutex,};
+use std::sync::Mutex;
 
 use lazy_static::lazy_static;
 
@@ -227,14 +227,16 @@ fn get_front_page() -> ScrollView<IdView<LinearLayout>> {
         );
 
         list.get_mut().deref_mut().add_child(listing);
-        
     }
 
     ScrollView::new(list)
 }
 
 fn draw(t: &BoxView<PaddedView<LinearLayout>>, p: &Printer) {
-    let style = ColorStyle::new(Color::Light(BaseColor::Green), Color::Light(BaseColor::Black));
+    let style = ColorStyle::new(
+        Color::Light(BaseColor::Green),
+        Color::Light(BaseColor::Black),
+    );
 
     p.with_color(style, |printer: &Printer| {
         // printer.print_box((0, 0), printer.output_size, false);
@@ -254,7 +256,6 @@ fn main() {
     let mut win = setup_window();
     win.run();
 }
-
 
 /// Tests
 
