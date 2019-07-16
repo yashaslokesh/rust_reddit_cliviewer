@@ -54,6 +54,10 @@ impl Link {
         self.id.as_str()
     }
 
+    pub fn score(&self) -> u32 {
+        self.score()
+    }
+
     pub fn subreddit(&self) -> &str {
         self.subreddit.as_str()
     }

@@ -18,21 +18,23 @@ use client::RedditClient;
 // use cursive::traits::*;
 use cursive::{
     align::VAlign,
-    event::Key,
+    event::{Key, EventResult, Event, MouseEvent, MouseButton},
     menu::MenuTree,
     theme::{BaseColor, Color, ColorStyle, PaletteColor, Theme},
     traits::*,
-    view::SizeConstraint,
+    view::{SizeConstraint, ScrollStrategy},
     views::{
         BoxView, Button, Canvas, Dialog, EditView, LinearLayout, ListView, OnEventView, PaddedView,
-        ScrollView, SelectView, TextView,
+        ScrollView, SelectView, TextView, Checkbox, IdView,
     },
     Cursive, Printer,
 };
 
+use core::ops::DerefMut;
+
 use reqwest;
 
-use std::sync::Mutex;
+use std::{sync::Mutex,};
 
 use lazy_static::lazy_static;
 
@@ -113,6 +115,12 @@ fn setup_window() -> Cursive {
 
     win.add_layer(get_front_page());
 
+    win.add_global_callback('p', |s| {
+        s.call_on_id("front_page", |view: &mut LinearLayout| {
+            println!("idx: {}", view.get_focus_index());
+        });
+    });
+
     let theme = configure_custom_theme(&win);
     win.set_theme(theme);
 
@@ -181,19 +189,21 @@ fn configure_custom_theme(win: &Cursive) -> Theme {
     theme
 }
 
-fn get_front_page() -> ScrollView<OnEventView<LinearLayout>> {
+fn get_front_page() -> ScrollView<IdView<LinearLayout>> {
     let links = R_CLIENT.lock().unwrap().get_hot();
 
     // let mut list = ListView::new();
-    let mut list = OnEventView::new(LinearLayout::vertical()).on_event_inner(
-        Key::Enter,
-        |l: &mut LinearLayout, _| {
-            println!("idx: {}", l.get_focus_index());
+    // let mut list = OnEventView::new(LinearLayout::vertical()).on_event_inner(
+    //     'p',
+    //     |l: &mut LinearLayout, _| {
+    //         // println!("idx: {}", l.get_focus_index());
 
-            // l.get_child_mut(l.get_focus_index()).unwrap().None
-            None
-        },
-    );
+    //         // l.get_child_mut(l.get_focus_index()).unwrap().None
+    //         Some(EventResult::Consumed(None))
+    //     },
+    // );
+
+    let mut list = IdView::new("front_page", LinearLayout::vertical());
 
     for link in links {
         // let link_wrapper = Boxable
@@ -216,26 +226,22 @@ fn get_front_page() -> ScrollView<OnEventView<LinearLayout>> {
             .with_draw(draw),
         );
 
-        list.get_inner_mut().add_child(listing);
+        list.get_mut().deref_mut().add_child(listing);
+        
     }
 
-    // list.
-
-    // BoxView::with_full_screen(list)
     ScrollView::new(list)
 }
 
 fn draw(t: &BoxView<PaddedView<LinearLayout>>, p: &Printer) {
-    let style = ColorStyle::new(Color::Dark(BaseColor::Blue), Color::Light(BaseColor::Blue));
+    let style = ColorStyle::new(Color::Light(BaseColor::Green), Color::Light(BaseColor::Black));
 
     p.with_color(style, |printer: &Printer| {
         // printer.print_box((0, 0), printer.output_size, false);
 
-        let offset_printer = printer.offset((0, 0));
+        printer.print_box((0, 0), printer.output_size, false);
 
-        offset_printer.print_box((0, 0), offset_printer.output_size, false);
-
-        t.draw(&offset_printer);
+        t.draw(&printer);
         // printer.print((0, 0), "+");
     })
 }
@@ -247,21 +253,15 @@ lazy_static! {
 fn main() {
     let mut win = setup_window();
     win.run();
-
-    // let c = reqwest::Client::new();
-
-    // let mut r = c.get("https://api.reddit.com/hot").send();
-
-    // let m = r.unwrap().text().unwrap();
-
-    // println!("{}", m);
-
-    // test();
 }
 
-fn test() {
-    let t = R_CLIENT.lock().unwrap().get_hot();
-    println!("OK",);
-}
 
-// impl
+/// Tests
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn basic_test() {
+        assert_eq!(3 * 4, 12)
+    }
+}
